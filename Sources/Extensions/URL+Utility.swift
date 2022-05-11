@@ -15,4 +15,16 @@ extension URL {
 
         return false
     }
+
+    var isRelative: Bool {
+        let regex = try! NSRegularExpression(pattern: "^\\/\\/\\/.*")
+        return regex.matches(self.path)
+    }
+}
+
+extension String {
+    var isRelative: Bool {
+        let regex = try! NSRegularExpression(pattern: "^\\..*")
+        return regex.matches(self)
+    }
 }
