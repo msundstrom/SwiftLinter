@@ -171,7 +171,7 @@ public class LinterRunner {
             }
         }
 
-        return filePathResult && lineResult
+        return filePathResult && fileResult && lineResult
     }
 
     private func runFilePathLinters() async -> Bool {
