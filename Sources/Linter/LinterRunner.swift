@@ -1,29 +1,22 @@
 import Foundation
 
-
-
 protocol SingleLinterRunner {
     func run() async -> SingleLinterResults
 }
 
 extension SingleLinterRunner {
-    func parallelize<TypeThing>(for files: [TypeThing], _ operation: (TypeThing) -> Void) {
+    func parallelize(for files: [URL], _ operation: (URL) -> Void) {
         DispatchQueue.concurrentPerform(iterations: files.count) { index in
             operation(files[index])
         }
     }
 }
 
-
-
-
-
 public class LinterRunner {  
     let dir: String
     let linterOptions: LinterOptions
 
     private var timer: LintTimer = LintTimer()
-
     private let baseURL: URL
 
     private let filePathRules: [FilePathLinterRule.Type]
@@ -66,7 +59,6 @@ public class LinterRunner {
         var fileTypes: [FileType] = filePathRules.map({ $0.fileType })
         fileTypes.append(contentsOf: fileRules.map({ $0.fileType }))
         fileTypes.append(contentsOf: lineRules.map({ $0.fileType }))
-
 
         FileManagement.cacheFiles(
             ofTypes: fileTypes,
