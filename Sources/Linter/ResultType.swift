@@ -1,45 +1,41 @@
 import Foundation
 
-enum ResultType {
+enum ResultType: CaseIterable {
     case passed, warning, failed
 }
 
 extension ResultType: Comparable {
     static func < (lhs: ResultType, rhs: ResultType) -> Bool {
-        if lhs == .passed && (rhs == .warning || rhs == .failed) {
-            return true
-        } else if lhs == .warning && rhs == .failed {
-            return true
+        switch lhs {
+        case .passed:
+            return (rhs == .warning || rhs == .failed)
+        case .warning:
+            return rhs == .failed
+        case .failed:
+            return false
         }
-
-        return false
     }
 
     static func > (lhs: ResultType, rhs: ResultType) -> Bool {
-        if (lhs == .warning || lhs == .failed) && rhs == .passed {
-            return true
-        } else if lhs == .failed && rhs == .warning {
-            return true
+        switch lhs {
+        case .passed:
+            return false
+        case .warning:
+            return rhs == .passed
+        case .failed:
+            return (rhs == .warning || rhs == .passed )
         }
-
-        return false
     }
 
     static func >= (lhs: ResultType, rhs: ResultType) -> Bool {
-        switch rhs {
+        switch lhs {
         case .passed:
-            return true
+            return rhs == .passed
         case .warning:
-            if lhs == .failed || lhs == .warning {
-                return true
-            }
+            return (rhs == .warning || rhs == .passed)
         case .failed:
-            if lhs == .failed {
-                return true
-            }
+            return true
         }
-
-        return false
     }
 
     static func <= (lhs: ResultType, rhs: ResultType) -> Bool {
@@ -47,15 +43,9 @@ extension ResultType: Comparable {
         case .passed:
             return true
         case .warning:
-            if rhs == .warning || rhs == .failed {
-                return true
-            }
+            return rhs == .warning || rhs == .failed
         case .failed:
-            if rhs == .failed {
-                return true
-            }
+            return rhs == .failed
         }
-
-        return false
     }
 }
