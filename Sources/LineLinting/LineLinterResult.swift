@@ -8,7 +8,7 @@ public struct LineLinterResult: RuleResult {
     var lineNumber: Int = 0
 
     var message: String {
-        "- \(linterMessage) (line \(lineNumber))"
+        "- \(linterMessage) (line \(lineNumber), '\(line)')"
     }
 }
 

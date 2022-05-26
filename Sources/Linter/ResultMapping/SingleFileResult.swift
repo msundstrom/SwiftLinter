@@ -23,7 +23,7 @@ struct SingleFileResult {
         }
 
         if summaryLines.count > 0 {
-            return summaryLines.joined(separator: "\n")
+            return summaryLines.joined(separator: "\n") + "\n"
         } else {
             return "✅"
         }

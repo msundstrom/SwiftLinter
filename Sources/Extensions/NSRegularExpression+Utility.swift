@@ -11,7 +11,7 @@ public extension NSRegularExpression {
         return firstMatch(in: string, options: [], range: range) != nil
     }
 
-    func match(_ string: String) -> RegexMatch? {
+    func match(inFile string: String) -> RegexMatch? {
         let range = NSRange(location: 0, length: string.utf16.count)
         let potentialMatch = firstMatch(in: string, options: [], range: range)
 
@@ -30,7 +30,7 @@ public extension NSRegularExpression {
         }
 
         return RegexMatch(
-            match: matchString,
+            match: matchString.trimmingCharacters(in: .whitespacesAndNewlines),
             lineNumber: linesCount
         )
     }

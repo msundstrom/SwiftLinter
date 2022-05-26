@@ -1,14 +1,21 @@
 import Foundation
 
+extension URL {
+    func matches(_ fileTypes: [FileType]) -> FileType? {
+        for fileType in fileTypes {
+            if fileType.matches(self) {
+                return fileType
+            }
+        }
+
+        return nil
+    }
+}
+
 struct FileManagement {
     private static var fileCache = [FileType: [URL]]()
 
-    static func files(ofType type: FileType, at baseURL: URL, ignoreList: [FileIgnore]) -> [URL] {
-        if let existingFiles = fileCache[type] {
-            return existingFiles
-        }
-
-        var files = [URL]()
+    static func cacheFiles(ofTypes types: [FileType], at baseURL: URL, ignoreList: [FileIgnore]) {
         if let enumerator = FileManager.default.enumerator(
             at: baseURL,
             includingPropertiesForKeys: [.isRegularFileKey],
@@ -16,14 +23,26 @@ struct FileManagement {
         ) {
             for case let fileURL as URL in enumerator {
                 guard !fileURL.isFiltered(by: ignoreList) else { continue }
+                guard let fileType = fileURL.matches(types) else { continue }
 
-                if type.matches(fileURL) {
-                    files.append(fileURL)
+                guard var urls = fileCache[fileType] else {
+                    fileCache[fileType] = [fileURL]
+                    continue
                 }
+
+                urls.append(fileURL)
+
+                fileCache[fileType] = urls
             }
         }
+    }
 
-        fileCache[type] = files
+    static func files(ofType type: FileType, ignoreList: [FileIgnore]) -> [URL] {
+
+        guard let files = fileCache[type] else {
+            fatalError()
+        }
+
         return files
     }
 

@@ -14,83 +14,7 @@ extension SingleLinterRunner {
     }
 }
 
-struct FilePathLinterRunner: SingleLinterRunner {
-    let rule: FilePathLinterRule.Type
-    let files: [URL]
-    let baseURL: URL
 
-    func run() async -> SingleLinterResults {
-        var linterResult = SingleLinterResults(rule.name)
-
-        parallelize(for: files) { fileURL in
-            guard !fileURL.isFiltered(by: rule.ignoreList) else { return }
-
-            let result = rule.run(fileURL)
-
-            var singleFileResult = SingleFileResult(file: baseURL.reduce(fileURL))
-            singleFileResult.add(result)
-
-            linterResult.add(fileResult: singleFileResult)
-        }
-
-        return linterResult
-    }
-}
-
-struct FileLinterRunner: SingleLinterRunner {
-    let rule: FileLinterRule.Type
-    let files: [URL]
-    let baseURL: URL
-
-    func run() async -> SingleLinterResults {
-        var linterResult = SingleLinterResults(rule.name)
-
-        parallelize(for: files) { fileURL in
-            guard !fileURL.isFiltered(by: rule.ignoreList) else { return }
-
-            do {
-                let contents = try String(contentsOf: fileURL)
-                let result = rule.run(fileURL, contents: contents)
-
-                var singleFileResult = SingleFileResult(file: baseURL.reduce(fileURL))
-                singleFileResult.add(result)
-
-                linterResult.add(fileResult: singleFileResult)
-            } catch {
-                print(error)
-            }
-        }
-
-        return linterResult
-    }
-}
-
-struct SingleLineLinterRunner: SingleLinterRunner {
-    let rule: LineLinterRule.Type
-    let files: [URL]
-    let baseURL: URL
-
-    func run() async -> SingleLinterResults {
-        var linterResult = SingleLinterResults(rule.name)
-        parallelize(for: files) { fileURL in
-            var fileResult = SingleFileResult(file: baseURL.reduce(fileURL))
-            FileManagement.readLines(forFile: fileURL) { line, lineNr in
-                let localPath = baseURL.reduce(fileURL)
-                var result = rule.run(for: line, path: localPath)
-                result.lineNumber = lineNr
-                result.line = line
-                result.filePath = baseURL.reduce(fileURL)
-
-                fileResult.add(result)
-                return result.result == .passed
-            }
-
-            linterResult.add(fileResult: fileResult)
-        }
-
-        return linterResult
-    }
-}
 
 
 
@@ -138,6 +62,18 @@ public class LinterRunner {
         var fileResult = true
         var lineResult = true
 
+
+        var fileTypes: [FileType] = filePathRules.map({ $0.fileType })
+        fileTypes.append(contentsOf: fileRules.map({ $0.fileType }))
+        fileTypes.append(contentsOf: lineRules.map({ $0.fileType }))
+
+
+        FileManagement.cacheFiles(
+            ofTypes: fileTypes,
+            at: baseURL,
+            ignoreList: linterOptions.ignorePaths
+        )
+
         if filePathRules.count > 0 {
             timer.start(for: .filePath)
             filePathResult = await runFilePathLinters()
@@ -169,6 +105,13 @@ public class LinterRunner {
             if lineRules.count > 0 {
                 print(timer.time(for: .line))
             }
+
+            if
+                filePathRules.count > 0 ||
+                    fileRules.count > 0 ||
+                    lineRules.count > 0 {
+                print(timer.time(for: .all))
+            }
         }
 
         return filePathResult && fileResult && lineResult
@@ -178,7 +121,6 @@ public class LinterRunner {
         let operations: [SingleLinterRunner] = filePathRules.map { rule in
             let files = FileManagement.files(
                 ofType: rule.fileType,
-                at: baseURL,
                 ignoreList: linterOptions.ignorePaths
             )
             return FilePathLinterRunner(
@@ -196,9 +138,8 @@ public class LinterRunner {
         let operations: [SingleLinterRunner] = fileRules.map { rule in
             let files = FileManagement.files(
                 ofType: rule.fileType,
-                at: baseURL,
                 ignoreList: linterOptions.ignorePaths
-            )
+            ).filter({ !$0.isFiltered(by: rule.ignoreList) })
             return FileLinterRunner(
                 rule: rule,
                 files: files,
@@ -214,9 +155,8 @@ public class LinterRunner {
         let operations: [SingleLinterRunner] = lineRules.map { rule in
             let files = FileManagement.files(
                 ofType: rule.fileType,
-                at: baseURL,
                 ignoreList: linterOptions.ignorePaths
-            )
+            ).filter({ !$0.isFiltered(by: rule.ignoreList) })
             return SingleLineLinterRunner(
                 rule: rule,
                 files: files,

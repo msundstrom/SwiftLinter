@@ -1,9 +1,5 @@
 import Foundation
 
-//struct FileLinterResult: RuleResult {
-//
-//}
-
 public protocol LineLinterRule {
     static var name: String { get }
     static var description: String { get }
