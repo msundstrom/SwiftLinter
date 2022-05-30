@@ -24,9 +24,9 @@ struct SingleFileResult {
 
         if summaryLines.count > 0 {
             return summaryLines.joined(separator: "\n") + "\n"
-        } else {
-            return "✅"
         }
+
+        return ""
     }
 
     private var lineResults = [RuleResult]()
