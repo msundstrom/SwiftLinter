@@ -9,10 +9,15 @@ class LintTimer {
     var endTimes: [String: DispatchTime] = [:]
 
     func start(`for` id: TimerType) {
+        precondition(id != .all, "Cannot start with .all")
         startTimes[id.rawValue] = .now()
     }
 
     func end(`for` id: TimerType) {
+        precondition(id != .all, "Cannot end with .all")
+        guard startTimes[id.rawValue] != nil else {
+            return
+        }
         endTimes[id.rawValue] = .now()
     }
 
