@@ -12,25 +12,26 @@ extension SingleLinterRunner {
     }
 }
 
-public class LinterRunner {  
-    let dir: String
+public class LinterRunner {
+    private let baseURL: URL
+    let fileManager: LintFileManager
     let linterOptions: LinterOptions
 
     private var timer: LintTimer = LintTimer()
-    private let baseURL: URL
 
     private let filePathRules: [FilePathLinterRule.Type]
     private let fileRules: [FileLinterRule.Type]
     private let lineRules: [LineLinterRule.Type]
 
     public init(
+        fileManager: LintFileManager = CachingLintFileManager(),
         dir: String,
         linterOptions: LinterOptions,
         filePathRules: [FilePathLinterRule.Type],
         fileRules: [FileLinterRule.Type],
         lineRules: [LineLinterRule.Type]
     ) {
-        self.dir = dir
+        self.fileManager = fileManager
         self.linterOptions = linterOptions
         self.filePathRules = filePathRules
         self.fileRules = fileRules
@@ -60,11 +61,13 @@ public class LinterRunner {
         fileTypes.append(contentsOf: fileRules.map({ $0.fileType }))
         fileTypes.append(contentsOf: lineRules.map({ $0.fileType }))
 
-        FileManagement.cacheFiles(
+        print("Preloading files...")
+        fileManager.preloadFiles(
             ofTypes: fileTypes,
-            at: baseURL,
+            baseURL: baseURL,
             ignoreList: linterOptions.ignorePaths
         )
+        print("Preloading done!")
 
         if filePathRules.count > 0 {
             timer.start(for: .filePath)
@@ -111,7 +114,7 @@ public class LinterRunner {
 
     private func runFilePathLinters() async -> Bool {
         let operations: [SingleLinterRunner] = filePathRules.map { rule in
-            let files = FileManagement.files(
+            let files = fileManager.files(
                 ofType: rule.fileType,
                 ignoreList: linterOptions.ignorePaths
             )
@@ -128,7 +131,7 @@ public class LinterRunner {
 
     private func runFileLinters() async -> Bool {
         let operations: [SingleLinterRunner] = fileRules.map { rule in
-            let files = FileManagement.files(
+            let files = fileManager.files(
                 ofType: rule.fileType,
                 ignoreList: linterOptions.ignorePaths
             ).filter({ !$0.isFiltered(by: rule.ignoreList) })
@@ -145,7 +148,7 @@ public class LinterRunner {
 
     private func runLineLinters() async -> Bool {
         let operations: [SingleLinterRunner] = lineRules.map { rule in
-            let files = FileManagement.files(
+            let files = fileManager.files(
                 ofType: rule.fileType,
                 ignoreList: linterOptions.ignorePaths
             ).filter({ !$0.isFiltered(by: rule.ignoreList) })

@@ -9,7 +9,7 @@ public struct SingleLineLinterRunner: SingleLinterRunner {
         var linterResult = SingleLinterResults(rule.name)
         parallelize(for: files) { fileURL in
             var fileResult = SingleFileResult(file: baseURL.reduce(fileURL))
-            FileManagement.readLines(forFile: fileURL) { line, lineNr in
+            FileUtility.readLines(forFile: fileURL) { line, lineNr in
                 let localPath = baseURL.reduce(fileURL)
                 var result = rule.run(for: line, path: localPath)
                 result.lineNumber = lineNr
