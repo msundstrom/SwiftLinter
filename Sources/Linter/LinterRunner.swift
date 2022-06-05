@@ -17,7 +17,7 @@ public class LinterRunner {
     let fileManager: SwiftLinterFileManager
     let linterOptions: LinterOptions
 
-    private var timer: LintTimer = LintTimer()
+    private var timerManager: TimerManager = TimerManager()
 
     private let filePathRules: [FilePathLinterRule.Type]
     private let fileRules: [FileLinterRule.Type]
@@ -45,6 +45,12 @@ public class LinterRunner {
         }
 
         baseURL = url.absoluteURL
+
+        // set up timers
+        timerManager.add(LintTimer(.file))
+        timerManager.add(LintTimer(.filePath))
+        timerManager.add(LintTimer(.filePreloading))
+        timerManager.add(LintTimer(.line))
     }
 
     public func run() async -> Bool {
@@ -58,50 +64,52 @@ public class LinterRunner {
         fileTypes.append(contentsOf: lineRules.map({ $0.fileType }))
 
         print("Preloading files...")
+        timerManager.fetch(.filePreloading).start()
         fileManager.preloadFiles(
             ofTypes: fileTypes,
             baseURL: baseURL,
             ignoreList: linterOptions.ignorePaths
         )
-        print("Preloading done!")
+        timerManager.fetch(.filePreloading).end()
+        print("Preloading done! (\(timerManager.fetch(.filePreloading).formattedDuration(includeName: false)))")
 
         if filePathRules.count > 0 {
-            timer.start(for: .filePath)
+            timerManager.fetch(.filePath).start()
             filePathResult = await runFilePathLinters()
-            timer.end(for: .filePath)
+            timerManager.fetch(.filePath).end()
         }
 
         if fileRules.count > 0 {
-            timer.start(for: .file)
+            timerManager.fetch(.file).start()
             fileResult = await runFileLinters()
-            timer.end(for: .file)
+            timerManager.fetch(.file).end()
         }
 
         if lineRules.count > 0 {
-            timer.start(for: .line)
+            timerManager.fetch(.line).start()
             lineResult = await runLineLinters()
-            timer.end(for: .line)
+            timerManager.fetch(.line).end()
         }
 
         if linterOptions.printExecutionTime {
 
             if filePathRules.count > 0 {
-                print(timer.time(for: .filePath))
+                print(timerManager.fetch(.filePath).formattedDuration())
             }
 
             if fileRules.count > 0 {
-                print(timer.time(for: .file))
+                print(timerManager.fetch(.file).formattedDuration())
             }
 
             if lineRules.count > 0 {
-                print(timer.time(for: .line))
+                print(timerManager.fetch(.line).formattedDuration())
             }
 
             if
                 filePathRules.count > 0 ||
                     fileRules.count > 0 ||
                     lineRules.count > 0 {
-                print(timer.time(for: .all))
+                //print(timer.time(for: .all))
             }
         }
 

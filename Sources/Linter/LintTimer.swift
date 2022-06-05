@@ -2,48 +2,55 @@ import Foundation
 
 class LintTimer {
     enum TimerType: String {
-        case all, filePath, file, line
+        case filePath = "File path", file = "File", line = "Line", filePreloading = "File preloading"
     }
 
-    var startTimes: [String: DispatchTime] = [:]
-    var endTimes: [String: DispatchTime] = [:]
-
-    func start(`for` id: TimerType) {
-        precondition(id != .all, "Cannot start with .all")
-        startTimes[id.rawValue] = .now()
-    }
-
-    func end(`for` id: TimerType) {
-        precondition(id != .all, "Cannot end with .all")
-        guard startTimes[id.rawValue] != nil else {
-            return
+    let type: TimerType
+    var duration: DispatchTime {
+        guard
+            let startTime = startTime,
+            let endTime = endTime
+        else {
+            return DispatchTime(uptimeNanoseconds: 0)
         }
-        endTimes[id.rawValue] = .now()
+
+        return endTime - startTime
     }
 
-    func time(`for` id: TimerType) -> String {
-        switch id {
-        case .all:
-            var totalTime: UInt64 = 0
-            startTimes.forEach { (key: String, value: DispatchTime) in
-                totalTime += endTimes[key]!.uptimeNanoseconds - value.uptimeNanoseconds
-            }
+    private var startTime: DispatchTime? = nil
+    private var endTime: DispatchTime? = nil
 
-            let timeInterval = Double(totalTime) / 1_000_000_000
+    init(_ type: TimerType) {
+        self.type = type
+    }
 
-            return "Total: \(timeInterval) seconds"
-        case .filePath, .file, .line:
-            guard
-                let startTime = startTimes[id.rawValue],
-                let endtime = endTimes[id.rawValue]
-            else {
-                return "----"
-            }
+    func start() {
+        startTime = .now()
+    }
 
-            let nanoSeconds = endtime.uptimeNanoseconds - startTime.uptimeNanoseconds
-            let timeInterval = Double(nanoSeconds) / 1_000_000_000
+    func end() {
+        endTime = .now()
+    }
 
-            return "\(id): \(timeInterval) seconds"
+    func formattedDuration(includeName: Bool = true) -> String {
+        "\(includeName ? type.rawValue + ": " : "")\(duration.formatted)"
+    }
+}
+
+class TimerManager {
+    private var timers = [LintTimer.TimerType: LintTimer]()
+
+    func add(_ timer: LintTimer) {
+        precondition(timers[timer.type] == nil, "Timer of type \"\(timer.type.rawValue)\" already added!")
+
+        timers[timer.type] = timer
+    }
+
+    func fetch(_ timerType: LintTimer.TimerType) -> LintTimer {
+        guard let timer = timers[timerType] else {
+            fatalError("No timer found of type \"\(timerType.rawValue)\"!")
         }
+
+        return timer
     }
 }
