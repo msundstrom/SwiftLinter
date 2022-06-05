@@ -2,7 +2,7 @@ import Foundation
 
 public enum FileType: Hashable {
     case swift, yaml, markdown
-    case custom(NSRegularExpression)
+    case custom(String)
 
     func matches(_ url: URL) -> Bool {
         switch self {
@@ -12,7 +12,8 @@ public enum FileType: Hashable {
             return url.fileType == "yaml"
         case .markdown:
             return url.fileType == "md"
-        case .custom(let regex):
+        case .custom(let pattern):
+            let regex = try! NSRegularExpression(pattern: pattern)
             return regex.matches(url.path)
         }
     }

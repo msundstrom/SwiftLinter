@@ -1,0 +1,6 @@
+{
+    "ATestJSON": {
+        "title": "someValue",
+        "someValues": [23, 53, 43, 23]
+    }
+}

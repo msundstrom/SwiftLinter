@@ -27,6 +27,7 @@ let package = Package(
             path: "Sources"),
         .testTarget(
             name: "SwiftLinterTests",
-            dependencies: ["SwiftLinter"]),
+            dependencies: ["SwiftLinter"],
+            resources: [.copy("TestFiles")]),
     ]
 )
