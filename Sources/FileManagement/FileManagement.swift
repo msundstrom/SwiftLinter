@@ -53,7 +53,11 @@ public class CachingFileManager: SwiftLinterFileManager {
         ofType type: FileType,
         ignoreList: [FileIgnore] = []
     ) -> [URL] {
-        guard let files = fileCache[type] else { return [] }
+        guard var files = fileCache[type] else { return [] }
+
+        files = files.filter({ url in
+            !url.isFiltered(by: ignoreList)
+        })
 
         return files
     }
