@@ -14,7 +14,7 @@ extension SingleLinterRunner {
 
 public class LinterRunner {
     private let baseURL: URL
-    let fileManager: LintFileManager
+    let fileManager: SwiftLinterFileManager
     let linterOptions: LinterOptions
 
     private var timer: LintTimer = LintTimer()
@@ -24,7 +24,7 @@ public class LinterRunner {
     private let lineRules: [LineLinterRule.Type]
 
     public init(
-        fileManager: LintFileManager = CachingLintFileManager(),
+        fileManager: SwiftLinterFileManager = CachingFileManager(),
         dir: String,
         linterOptions: LinterOptions,
         filePathRules: [FilePathLinterRule.Type],
@@ -39,11 +39,7 @@ public class LinterRunner {
 
         let url: URL
         if dir.isRelative {
-            url = URL(
-                fileURLWithPath: dir,
-                isDirectory: true,
-                relativeTo: URL(string: FileManager.default.currentDirectoryPath)
-            )
+            url = FileUtility.resolve(relativePath: dir)
         } else {
             url = URL(fileURLWithPath: dir)
         }
