@@ -8,7 +8,7 @@ public struct FileLinterResult: RuleResult {
     var line: String = ""
 
     var message: String {
-        "- \(linterMessage)"
+        "- \(linterMessage) (\(line) - line \(lineNumber))"
     }
 }
 
