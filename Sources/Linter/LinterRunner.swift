@@ -174,20 +174,20 @@ public class LinterRunner {
             of: SingleLinterResults.self,
             returning: AllLinters.self,
             body: { taskGroup in
-            for operation in operations {
-                taskGroup.addTask {
-                    let value = await operation.run()
-                    return value
+                for operation in operations {
+                    taskGroup.addTask {
+                        let value = await operation.run()
+                        return value
+                    }
                 }
-            }
 
-            var results = AllLinters()
-            for await result in taskGroup {
-                results.add(linterResult: result)
-            }
+                var results = AllLinters()
+                for await result in taskGroup {
+                    results.add(linterResult: result)
+                }
 
-            return results
-        })
+                return results
+            })
 
         print(allResults.message)
         return allResults

@@ -6,5 +6,5 @@ public protocol FileLinterRule {
     static var fileType: FileType { get }
     static var ignoreList: [FileIgnore] { get }
 
-    static func run(_ url: URL, contents: String) -> FileLinterResult
+    static func run(_ url: URL, contents: String) async -> FileLinterResult
 }

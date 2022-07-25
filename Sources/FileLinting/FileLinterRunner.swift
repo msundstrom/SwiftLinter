@@ -13,7 +13,7 @@ public struct FileLinterRunner: SingleLinterRunner {
 
             do {
                 let contents = try String(contentsOf: fileURL)
-                let result = rule.run(fileURL, contents: contents)
+                let result = await rule.run(fileURL, contents: contents)
 
                 var singleFileResult = SingleFileResult(file: baseURL.reduce(fileURL))
                 singleFileResult.add(result)
